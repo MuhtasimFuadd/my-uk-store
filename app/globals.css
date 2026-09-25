@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", sans-serif;
+}
+
+body {
+  background-color: #F6F4EF;
+  color: #14181C;
+}
+
+::selection {
+  background-color: #1F6F5C;
+  color: #F6F4EF;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #1F6F5C;
+  outline-offset: 2px;
+}
