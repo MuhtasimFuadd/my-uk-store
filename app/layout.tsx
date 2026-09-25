@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-display",
   weight: ["400", "500", "600"],
