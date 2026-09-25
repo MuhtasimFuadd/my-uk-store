@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Cinzel, Inter } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "@/lib/cart-context";
 
-const display = Playfair_Display({
+const display = Cinzel({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"]
+  weight: ["500", "600"]
 });
 
 const body = Inter({
@@ -16,8 +16,8 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Kettlewell & Co. — Considered goods for everyday life",
-  description: "A small UK shop for well-made, everyday things."
+  title: "Threshold — Scents from other worlds",
+  description: "A small perfumery. Each bottle is a door; step through."
 };
 
 export default function RootLayout({
@@ -27,7 +27,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${display.variable} ${body.variable}`}>
-      <body className="font-body antialiased">{children}</body>
+      <body className="bg-ink font-body text-paper antialiased">
+        <CartProvider>{children}</CartProvider>
+      </body>
     </html>
   );
 }

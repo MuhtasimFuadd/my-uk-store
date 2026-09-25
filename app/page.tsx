@@ -2,6 +2,7 @@ import { getProducts } from "@/lib/products";
 import ProductGrid from "@/components/ProductGrid";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import Hero from "@/components/Hero";
 
 export const revalidate = 60;
 
@@ -11,20 +12,21 @@ export default async function Home() {
   return (
     <>
       <SiteHeader />
+      <Hero />
 
-      <section className="border-b border-line">
-        <div className="mx-auto max-w-content px-6 py-20">
-          <h1 className="max-w-xl font-display text-4xl italic leading-tight text-ink sm:text-5xl">
-            Everyday things, made to last a while.
-          </h1>
-          <p className="mt-5 max-w-md text-ink/60">
-            A small, growing shelf of goods we'd buy ourselves — picked for
-            how they wear in, not just how they look on day one.
+      <section id="collection" className="mx-auto max-w-content px-6 py-20">
+        <div className="mb-12 max-w-lg">
+          <p className="font-display text-xs uppercase tracking-[0.3em] text-brass-light">
+            The Collection
+          </p>
+          <h2 className="mt-3 font-display text-3xl text-paper">
+            Six doors, six worlds
+          </h2>
+          <p className="mt-3 text-paper/60">
+            Every scent starts at £10 while the shop is new. More doors open
+            soon.
           </p>
         </div>
-      </section>
-
-      <section id="shop" className="mx-auto max-w-content px-6 py-16">
         <ProductGrid products={products} />
       </section>
 

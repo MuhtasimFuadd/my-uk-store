@@ -3,22 +3,40 @@
 @tailwind utilities;
 
 :root {
-  --font-display: "Fraunces", serif;
+  --font-display: "Cinzel", serif;
   --font-body: "Inter", sans-serif;
 }
 
+html {
+  background-color: #0E0B08;
+}
+
 body {
-  background-color: #F6F4EF;
-  color: #14181C;
+  background-color: #0E0B08;
+  color: #F3ECE0;
 }
 
 ::selection {
-  background-color: #1F6F5C;
-  color: #F6F4EF;
+  background-color: #C79A44;
+  color: #0E0B08;
 }
 
 a:focus-visible,
-button:focus-visible {
-  outline: 2px solid #1F6F5C;
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #C79A44;
   outline-offset: 2px;
+}
+
+/* Subtle brass scrollbar to match the theme, non-essential */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0E0B08;
+}
+::-webkit-scrollbar-thumb {
+  background: #3A3227;
+  border-radius: 999px;
 }

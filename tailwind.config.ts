@@ -8,14 +8,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        paper: "#F6F4EF",
-        ink: "#14181C",
-        teal: {
-          DEFAULT: "#1F6F5C",
-          dark: "#154B3F"
+        ink: "#0E0B08",
+        panel: "#171310",
+        paper: "#F3ECE0",
+        brass: {
+          DEFAULT: "#C79A44",
+          light: "#E4C78A",
+          dark: "#8C6A2A"
         },
-        brass: "#B98B2E",
-        line: "#DEDACD"
+        ocean: "#2E6F8E",
+        forest: "#3F5C3A",
+        line: "#3A3227"
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],

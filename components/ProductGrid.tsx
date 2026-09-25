@@ -4,9 +4,9 @@ import ProductCard from "./ProductCard";
 export default function ProductGrid({ products }: { products: Product[] }) {
   if (products.length === 0) {
     return (
-      <p className="border border-dashed border-line px-6 py-16 text-center text-ink/60">
-        Nothing on the shelf yet. Add rows to your Supabase{" "}
-        <code className="font-mono">products</code> table to see them here.
+      <p className="border border-dashed border-line px-6 py-16 text-center text-paper/50">
+        The shelves are empty for now. Add a scent from the admin panel to
+        see it appear here.
       </p>
     );
   }
