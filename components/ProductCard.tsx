@@ -24,7 +24,8 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <article className="group">
-      <div className="relative aspect-[3/4] overflow-hidden border border-line bg-panel">
+      {/* Added 'rounded-lg' here. Because of 'overflow-hidden', it automatically rounds the image and the placeholder inside it. */}
+      <div className="relative aspect-[3/4] overflow-hidden rounded-3xl border border-line bg-panel">
         {product.image_url ? (
           <Image
             src={product.image_url}
