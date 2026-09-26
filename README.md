@@ -87,26 +87,6 @@ scents. The admin panel needs Supabase connected first (next section).
      with. Also stays server-only.
 6. Restart `npm run dev`. Visit `/admin`, log in, and try adding a scent.
 
-### Common setup gotchas
-
-- **The Project URL must NOT include `/rest/v1/`.** Use just
-  `https://xxxxxxxxxxxx.supabase.co` — `supabase-js` appends the API path
-  itself. Including it causes every request to silently or loudly fail.
-- **On Vercel, `NEXT_PUBLIC_...` variables must be Type "Config", not
-  "Secret".** A "Secret" type variable can't be read back out, which
-  breaks anything meant to be embedded in the browser. Keep
-  `SUPABASE_SERVICE_ROLE_KEY` and `ADMIN_PASSWORD` as "Secret" — just not
-  the two `NEXT_PUBLIC_` ones.
-- **New Supabase projects show "publishable" and "secret" keys by
-  default**, replacing the older "anon" and "service_role" names. They're
-  drop-in equivalents — publishable → `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-  secret → `SUPABASE_SERVICE_ROLE_KEY`. The older "Legacy API Keys" tab
-  still works too, if you prefer those.
-- **"permission denied for table products"** means the RLS policy is
-  fine but the underlying Postgres role is missing basic table grants —
-  `schema.sql` now includes explicit `grant` statements for this, but if
-  you ran an older copy, re-run the `grant ...` lines near the bottom.
-
 ## 3. Push to GitHub and deploy to Vercel
 
 Same as before — commit, push, and Vercel redeploys automatically. Just

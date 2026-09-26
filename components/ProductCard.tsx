@@ -24,10 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return (
     <article className="group">
-      {/* rounded-3xl (your change, kept) softens the corners on the image/
-          placeholder box — overflow-hidden clips the image inside it to
-          match, so the rounding applies whether it's a real photo or the
-          BottlePlaceholder. */}
+      {/* Added 'rounded-lg' here. Because of 'overflow-hidden', it automatically rounds the image and the placeholder inside it. */}
       <div className="relative aspect-[3/4] overflow-hidden rounded-3xl border border-line bg-panel">
         {product.image_url ? (
           <Image
@@ -41,27 +38,20 @@ export default function ProductCard({ product }: { product: Product }) {
           <BottlePlaceholder color={product.accent} />
         )}
       </div>
-
-      {/* text-base on phones, text-lg from sm: up — keeps titles readable
-          without feeling oversized on a 2-column mobile grid */}
-      <div className="mt-3 flex items-start justify-between gap-3 sm:mt-4">
-        <h3 className="font-display text-base leading-snug text-paper sm:text-lg">
+      <div className="mt-4 flex items-start justify-between gap-3">
+        <h3 className="font-display text-lg leading-snug text-paper">
           {product.title}
         </h3>
         <span className="whitespace-nowrap text-sm text-brass-light">
           £{product.price.toFixed(2)}
         </span>
       </div>
-
-      <p className="mt-1 text-xs leading-relaxed text-paper/60 sm:text-sm">
+      <p className="mt-1 text-sm leading-relaxed text-paper/60">
         {product.description}
       </p>
-
-      {/* py-2.5 (up from py-2) gives a slightly taller tap target for
-          fingers on mobile, without changing how it looks on desktop */}
       <button
         onClick={handleAdd}
-        className="mt-3 w-full border border-brass/50 px-4 py-2.5 text-xs uppercase tracking-wide text-brass-light transition-colors hover:border-brass hover:bg-brass/10 sm:w-auto sm:py-2"
+        className="mt-3 border border-brass/50 px-4 py-2 text-xs uppercase tracking-wide text-brass-light transition-colors hover:border-brass hover:bg-brass/10"
       >
         {justAdded ? "Added" : "Add to basket"}
       </button>

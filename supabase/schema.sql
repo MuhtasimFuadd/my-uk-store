@@ -28,16 +28,6 @@ create policy "Public products are viewable by everyone"
   on products for select
   using (true);
 
--- RLS policies control WHICH rows a role can touch, but Postgres also
--- requires the role to have basic table-level privileges in the first
--- place. Some projects don't grant these automatically, which shows up
--- as "permission denied for table products" even with RLS set up
--- correctly — so we grant them explicitly here.
-grant usage on schema public to anon, authenticated, service_role;
-grant select on products to anon, authenticated;
-grant select, insert, update, delete on products to service_role;
-grant usage, select on all sequences in schema public to anon, authenticated, service_role;
-
 -- Starter perfumes — delete or edit these from the admin panel once you
 -- add your own. All start at £10 while the shop is new.
 insert into products (title, price, image_url, description, accent)
