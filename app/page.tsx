@@ -20,11 +20,10 @@ export default async function Home() {
             The Collection
           </p>
           <h2 className="mt-3 font-display text-3xl text-paper">
-            Six doors, six worlds
+            A variety of scents, each a door to another world.
           </h2>
           <p className="mt-3 text-paper/60">
-            Every scent starts at £10 while the shop is new. More doors open
-            soon.
+            Browse below
           </p>
         </div>
         <ProductGrid products={products} />
