@@ -13,7 +13,7 @@ export default function CartPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto min-h-[60vh] max-w-content px-6 py-16">
+      <main className="mx-auto min-h-[60vh] max-w-content px-4 py-10 sm:px-6 sm:py-16">
         <h1 className="font-display text-3xl text-paper">Your basket</h1>
 
         {items.length === 0 ? (

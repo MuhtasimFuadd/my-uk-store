@@ -15,7 +15,7 @@ export default async function AdminPage() {
 
   if (!supabaseConfigured) {
     return (
-      <main className="mx-auto max-w-content px-6 py-16">
+      <main className="mx-auto max-w-content px-4 py-10 sm:px-6 sm:py-16">
         <h1 className="font-display text-2xl text-paper">Admin</h1>
         <p className="mt-4 max-w-md text-paper/60">
           The admin panel needs Supabase connected to save changes. Add{" "}
