@@ -46,6 +46,11 @@ export default async function AdminPage() {
           title="Inventory"
           description="View, edit, or remove existing products, and manage stock levels."
         />
+        <AdminCardLink
+          href="/admin/orders"
+          title="Orders"
+          description="See what's been purchased and each order's delivery address."
+        />
       </div>
     </main>
   );

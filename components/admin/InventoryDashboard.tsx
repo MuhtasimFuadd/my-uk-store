@@ -25,6 +25,9 @@ export default function InventoryDashboard() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<
+    Record<string, "idle" | "saving" | "saved" | "error">
+  >({});
 
   useEffect(() => {
     fetch("/api/admin/products")
@@ -41,28 +44,51 @@ export default function InventoryDashboard() {
   }
 
   async function handleSave(product: AdminProduct) {
-    const res = await fetch(`/api/admin/products/${product.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: product.title,
-        price: product.price,
-        description: product.description,
-        image_url: product.image_url,
-        vial_design_url: product.vial_design_url,
-        accent: product.accent,
-        gender: product.gender,
-        vial_size: product.vial_size,
-        in_stock: product.in_stock,
-        stock_count: product.stock_count
-      })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error || "Could not save changes.");
+    setSaveStatus((prev) => ({ ...prev, [product.id]: "saving" }));
+    setError(null);
+
+    let res: Response;
+    try {
+      res = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: product.title,
+          price: product.price,
+          description: product.description,
+          image_url: product.image_url,
+          vial_design_url: product.vial_design_url,
+          accent: product.accent,
+          gender: product.gender,
+          vial_size: product.vial_size,
+          in_stock: product.in_stock,
+          stock_count: product.stock_count
+        })
+      });
+    } catch {
+      // The fetch itself failed (network error) — this is different from
+      // the server responding with an error, and was previously
+      // unhandled, which is one way "Save" could silently do nothing.
+      setSaveStatus((prev) => ({ ...prev, [product.id]: "error" }));
+      setError("Could not reach the server. Check your connection and try again.");
       return;
     }
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setSaveStatus((prev) => ({ ...prev, [product.id]: "error" }));
+      setError(
+        data.error ||
+          "Could not save changes. If you added new fields recently, make sure you've re-run the latest supabase/schema.sql."
+      );
+      return;
+    }
+
     setProducts((prev) => prev.map((p) => (p.id === product.id ? data.product : p)));
+    setSaveStatus((prev) => ({ ...prev, [product.id]: "saved" }));
+    setTimeout(() => {
+      setSaveStatus((prev) => ({ ...prev, [product.id]: "idle" }));
+    }, 2000);
   }
 
   async function handleDelete(id: string) {
@@ -278,9 +304,22 @@ export default function InventoryDashboard() {
                 <div className="flex flex-row gap-2 md:flex-col">
                   <button
                     onClick={() => handleSave(product)}
-                    className="border border-brass/50 px-4 py-2 text-xs uppercase tracking-wide text-brass-light hover:border-brass hover:bg-brass/10"
+                    disabled={saveStatus[product.id] === "saving"}
+                    className={`border px-4 py-2 text-xs uppercase tracking-wide transition-colors ${
+                      saveStatus[product.id] === "saved"
+                        ? "border-green-700 text-green-400"
+                        : saveStatus[product.id] === "error"
+                        ? "border-red-800 text-red-300"
+                        : "border-brass/50 text-brass-light hover:border-brass hover:bg-brass/10"
+                    }`}
                   >
-                    Save
+                    {saveStatus[product.id] === "saving"
+                      ? "Saving…"
+                      : saveStatus[product.id] === "saved"
+                      ? "Saved ✓"
+                      : saveStatus[product.id] === "error"
+                      ? "Failed — retry"
+                      : "Save"}
                   </button>
                   <button
                     onClick={() => handleDelete(product.id)}

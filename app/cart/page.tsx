@@ -90,13 +90,12 @@ export default function CartPage() {
               <p className="mt-2 text-xs text-paper/50">
                 Shipping and any taxes are calculated at checkout.
               </p>
-              <button
-                disabled
-                title="Payment isn't connected yet"
-                className="mt-6 w-full cursor-not-allowed border border-line px-4 py-3 text-sm uppercase tracking-wide text-paper/40"
+              <Link
+                href="/checkout"
+                className="mt-6 block w-full border border-brass/60 px-4 py-3 text-center text-sm uppercase tracking-wide text-brass-light transition-colors hover:border-brass hover:bg-brass/10"
               >
-                Checkout — coming soon
-              </button>
+                Checkout
+              </Link>
             </div>
           </div>
         )}

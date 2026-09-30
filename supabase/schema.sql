@@ -47,15 +47,25 @@ grant usage, select on all sequences in schema public to anon, authenticated, se
 
 -- Starter perfumes — delete or edit these from the admin panel once you
 -- add your own. All start at £10 while the shop is new.
+--
+-- "on conflict do nothing" doesn't actually prevent duplicates here,
+-- since every row gets a fresh random id — there's nothing for it to
+-- conflict with. Instead, the "where not exists" below only runs this
+-- insert the very first time (when the table has zero rows). Once
+-- anything exists in products — these samples, or your own real
+-- products — re-running this whole file will skip this block entirely,
+-- so it's safe to re-run schema.sql later for other changes without
+-- worrying about duplicate demo rows.
 insert into products (title, price, image_url, description, accent, gender, vial_size, in_stock, stock_count)
-values
+select * from (values
   ('Deep Current', 10.00, '', 'Salt spray, ambergris, cold linen — the scent of the whale''s road, sung through fathoms of blue.', '#2E6F8E', 'unisex', '50ml', true, 12),
   ('Bioluminescence', 10.00, '', 'Kelp, white musk, night rain — a glow that follows you up from the deep and doesn''t quite fade.', '#1F6F5C', 'unisex', '50ml', true, 12),
   ('Fernshadow', 10.00, '', 'Green fig, moss, cedar — sunlight through a canopy that hasn''t seen a clock in centuries.', '#3F5C3A', 'unisex', '50ml', true, 12),
   ('Stag''s Hollow', 10.00, '', 'Birch, wet stone, black pepper — the path a deer takes when no one else is watching.', '#6B4A2F', 'male', '50ml', true, 12),
   ('Amber Vial No. 7', 10.00, '', 'Dried orange, clove, old book resin — the shop itself, bottled: brass, candle smoke, quiet.', '#C79A44', 'unisex', '30ml', true, 12),
   ('Nightshelf', 10.00, '', 'Tobacco leaf, dark honey, vetiver — for the last hour a shop is open, after the lamps are low.', '#4A2E1F', 'male', '50ml', true, 12)
-on conflict do nothing;
+) as starter_products(title, price, image_url, description, accent, gender, vial_size, in_stock, stock_count)
+where not exists (select 1 from products);
 
 -- Storage bucket for product photos uploaded from the admin panel.
 insert into storage.buckets (id, name, public)
@@ -69,3 +79,126 @@ drop policy if exists "Public read access to product photos" on storage.objects;
 create policy "Public read access to product photos"
   on storage.objects for select
   using (bucket_id = 'product-images');
+
+
+-- ============================================================
+-- ORDERS — created when a customer checks out.
+-- ============================================================
+
+create table if not exists orders (
+  id uuid primary key default gen_random_uuid(),
+  customer_name text not null,
+  email text not null,
+  phone text not null default '',
+  address_line1 text not null,
+  address_line2 text not null default '',
+  city text not null,
+  postcode text not null,
+  items jsonb not null,        -- snapshot of what was bought: [{product_id, title, price, quantity}, ...]
+  total numeric(10, 2) not null,
+  status text not null default 'paid', -- always 'paid' for now — there's no real payment processor yet
+  created_at timestamptz not null default now()
+);
+
+-- Orders contain personal info (name, address, phone), so — unlike
+-- products — there is NO public read policy here at all. With RLS on and
+-- no select policy, ordinary (anon/authenticated) requests can't read
+-- this table under any circumstance. Only the admin panel's service-role
+-- key can see orders, since service_role bypasses RLS entirely.
+alter table orders enable row level security;
+grant select, insert on orders to service_role;
+
+-- place_order() is what actually takes payment (a fake, instant "payment"
+-- for now) and creates the order. Doing this as one Postgres function,
+-- rather than several separate API calls, is what makes it safe against
+-- two customers buying the last item at the same time:
+--   - "for update" locks each product row the moment we look at it, so a
+--     second concurrent checkout has to wait its turn rather than reading
+--     stale stock numbers.
+--   - If ANY item in the order doesn't have enough stock, the function
+--     raises an exception — which automatically rolls back every change
+--     made earlier in the same function call (Postgres wraps each
+--     function execution in a transaction). So an order either fully
+--     succeeds or fully fails; stock is never partially deducted.
+--   - Prices come from the products table here, not from whatever the
+--     browser sends, so a tampered client-side cart can't check out for
+--     less than the real price.
+create or replace function place_order(
+  p_items jsonb,               -- [{"id": "uuid-...", "quantity": 2}, ...]
+  p_customer_name text,
+  p_email text,
+  p_phone text,
+  p_address_line1 text,
+  p_address_line2 text,
+  p_city text,
+  p_postcode text
+) returns table (order_id uuid, order_total numeric) as $$
+declare
+  v_item jsonb;
+  v_product_id uuid;
+  v_qty integer;
+  v_price numeric;
+  v_title text;
+  v_stock integer;
+  v_total numeric := 0;
+  v_order_items jsonb := '[]'::jsonb;
+  v_order_id uuid;
+begin
+  if jsonb_array_length(p_items) = 0 then
+    raise exception 'No items in order';
+  end if;
+
+  for v_item in select * from jsonb_array_elements(p_items)
+  loop
+    v_product_id := (v_item->>'id')::uuid;
+    v_qty := (v_item->>'quantity')::integer;
+
+    if v_qty is null or v_qty <= 0 then
+      raise exception 'Invalid quantity for item %', v_product_id;
+    end if;
+
+    -- "for update" locks this row until the function finishes, so a
+    -- second simultaneous order for the same product waits here instead
+    -- of reading the same (soon to be outdated) stock number.
+    select price, title, stock_count into v_price, v_title, v_stock
+    from products
+    where id = v_product_id
+    for update;
+
+    if not found then
+      raise exception 'Product % no longer exists', v_product_id;
+    end if;
+
+    if v_stock < v_qty then
+      raise exception 'Not enough stock for "%": only % left', v_title, v_stock;
+    end if;
+
+    update products
+    set stock_count = stock_count - v_qty,
+        in_stock = (stock_count - v_qty) > 0
+    where id = v_product_id;
+
+    v_total := v_total + (v_price * v_qty);
+    v_order_items := v_order_items || jsonb_build_object(
+      'product_id', v_product_id,
+      'title', v_title,
+      'price', v_price,
+      'quantity', v_qty
+    );
+  end loop;
+
+  insert into orders (
+    customer_name, email, phone, address_line1, address_line2, city, postcode, items, total, status
+  ) values (
+    p_customer_name, p_email, p_phone, p_address_line1, p_address_line2, p_city, p_postcode, v_order_items, v_total, 'paid'
+  )
+  returning id into v_order_id;
+
+  return query select v_order_id, v_total;
+end;
+$$ language plpgsql;
+
+-- Only our own server-side code (using the service-role key) is allowed
+-- to call this — never the public anon key directly.
+revoke all on function place_order(jsonb, text, text, text, text, text, text, text) from public;
+grant execute on function place_order(jsonb, text, text, text, text, text, text, text) to service_role;

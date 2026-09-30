@@ -151,6 +151,23 @@ If you already had products in Supabase before this update, re-run
 (`vial_design_url`, `gender`, `vial_size`, `in_stock`, `stock_count`) with
 safe defaults, it won't touch your existing rows' data.
 
+## Checkout and orders
+
+- `/checkout` — collects delivery details and has a "Pay now" button.
+  **There's no real payment processor connected yet** — clicking Pay Now
+  instantly "succeeds" (no card is charged) once stock is confirmed
+  available, creates an order record, and reduces stock. Swap this for a
+  real processor (e.g. Stripe) later; everything else stays the same.
+- Overselling is prevented at the database level, not just in the app:
+  `place_order()` in `supabase/schema.sql` locks each product row and
+  decrements stock inside a single all-or-nothing transaction, so two
+  people checking out for the last item at the same instant can't both
+  succeed — whoever's request reaches the database first wins, and the
+  other gets a clear "not enough stock" error instead of a broken order.
+- Orders are never publicly readable — there's no RLS policy allowing it,
+  only the admin panel's service-role key can see them. View them at
+  `/admin/orders`.
+
 ## What to add next
 
 - **Payment:** connect Stripe Checkout so the basket can actually charge
