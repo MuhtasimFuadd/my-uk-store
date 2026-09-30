@@ -64,7 +64,7 @@ export default function Hero() {
           which world you step into.*/}
         </p>
         <a
-          href="#collection"
+          href="/products"
           className="mt-8 inline-block border border-brass/60 px-7 py-3 text-sm tracking-wide text-brass-light transition-colors hover:border-brass hover:bg-brass/10"
         >
           Enter the shop

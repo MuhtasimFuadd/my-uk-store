@@ -13,9 +13,9 @@ export default function SiteHeader() {
           MMBoutique
         </Link>
         <nav className="flex items-center gap-6 text-sm text-paper/80">
-          <a href="/#collection" className="hover:text-paper">
+          <Link href="/products" className="hover:text-paper">
             Shop
-          </a>
+          </Link>
           <Link href="/cart" className="hover:text-paper">
             Basket ({count})
           </Link>

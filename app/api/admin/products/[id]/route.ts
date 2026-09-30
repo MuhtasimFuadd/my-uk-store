@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/require-admin";
 
+const VALID_GENDERS = ["male", "female", "unisex"];
+
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
@@ -17,7 +19,20 @@ export async function PUT(
     updates.description = String(body.description).trim();
   if (body.image_url !== undefined)
     updates.image_url = String(body.image_url).trim();
+  if (body.vial_design_url !== undefined)
+    updates.vial_design_url = String(body.vial_design_url).trim();
   if (body.accent !== undefined) updates.accent = body.accent ? String(body.accent) : null;
+  if (body.gender !== undefined)
+    updates.gender = VALID_GENDERS.includes(body.gender) ? body.gender : "unisex";
+  if (body.vial_size !== undefined) updates.vial_size = String(body.vial_size).trim();
+  if (body.in_stock !== undefined) updates.in_stock = Boolean(body.in_stock);
+  if (body.stock_count !== undefined) {
+    const stockCount = Number(body.stock_count);
+    if (!Number.isFinite(stockCount) || stockCount < 0) {
+      return NextResponse.json({ error: "Invalid stock count." }, { status: 400 });
+    }
+    updates.stock_count = Math.trunc(stockCount);
+  }
   if (body.price !== undefined) {
     const price = Number(body.price);
     if (Number.isNaN(price) || price < 0) {

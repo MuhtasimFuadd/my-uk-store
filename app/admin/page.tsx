@@ -1,19 +1,10 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { ADMIN_COOKIE_NAME, isValidSessionToken } from "@/lib/admin-auth";
-import AdminDashboard from "@/components/admin/AdminDashboard";
+import { requireAdminPage, isSupabaseConfigured } from "@/lib/require-admin-page";
+import AdminCardLink from "@/components/admin/AdminCardLink";
 
 export default async function AdminPage() {
-  const token = cookies().get(ADMIN_COOKIE_NAME)?.value;
-  if (!(await isValidSessionToken(token))) {
-    redirect("/admin/login");
-  }
+  await requireAdminPage();
 
-  const supabaseConfigured = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
-  );
-
-  if (!supabaseConfigured) {
+  if (!isSupabaseConfigured()) {
     return (
       <main className="mx-auto max-w-content px-6 py-16">
         <h1 className="font-display text-2xl text-paper">Admin</h1>
@@ -36,5 +27,26 @@ export default async function AdminPage() {
     );
   }
 
-  return <AdminDashboard />;
+  return (
+    <main className="mx-auto max-w-content px-6 py-16">
+      <h1 className="font-display text-2xl text-paper">Admin</h1>
+      <p className="mt-2 text-paper/60">Choose what you'd like to do.</p>
+
+      {/* Adding a third/fourth card later is just another AdminCardLink
+          here — copy one of the two below and change its href/title/
+          description. */}
+      <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <AdminCardLink
+          href="/admin/products/new"
+          title="Add a new product"
+          description="Create a new scent, with its price, photos, gender, vial size, and stock."
+        />
+        <AdminCardLink
+          href="/admin/inventory"
+          title="Inventory"
+          description="View, edit, or remove existing products, and manage stock levels."
+        />
+      </div>
+    </main>
+  );
 }
