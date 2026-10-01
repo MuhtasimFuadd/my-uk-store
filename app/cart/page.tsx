@@ -20,7 +20,7 @@ export default function CartPage() {
           <div className="mt-10 border border-dashed border-line px-6 py-16 text-center text-paper/50">
             <p>Nothing in here yet.</p>
             <Link
-              href="/products"
+              href="/#collection"
               className="mt-4 inline-block border border-brass/50 px-5 py-2 text-xs uppercase tracking-wide text-brass-light hover:border-brass hover:bg-brass/10"
             >
               Browse the collection

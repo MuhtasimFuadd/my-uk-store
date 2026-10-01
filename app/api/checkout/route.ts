@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getSupabaseServerClient } from "@/lib/supabase-server";
+import { sendOrderConfirmationEmail } from "@/lib/email";
 
 type CheckoutItem = { id: string; quantity: number };
 
@@ -31,6 +33,15 @@ export async function POST(request: Request) {
     );
   }
 
+  // If they're signed in with Google, this links the order to their
+  // account so it shows up on /account/orders. Guest checkout (not
+  // signed in) still works fine — this is just null in that case, and
+  // place_order() defaults it to null too.
+  const supabaseSession = getSupabaseServerClient();
+  const {
+    data: { user }
+  } = await supabaseSession.auth.getUser();
+
   const supabase = getSupabaseAdmin();
 
   // This single database call does everything atomically — see
@@ -44,7 +55,8 @@ export async function POST(request: Request) {
     p_address_line1: address_line1,
     p_address_line2: address_line2,
     p_city: city,
-    p_postcode: postcode
+    p_postcode: postcode,
+    p_user_id: user?.id ?? null
   });
 
   if (error) {
@@ -55,6 +67,28 @@ export async function POST(request: Request) {
   }
 
   const result = Array.isArray(data) ? data[0] : data;
+
+  // place_order() only returns the id and total — fetch the full record
+  // back (including the item titles/prices it snapshotted) so the email
+  // can show real product names, not just ids.
+  const { data: orderRow } = await supabase
+    .from("orders")
+    .select("items")
+    .eq("id", result.order_id)
+    .single();
+
+  // Best-effort — if the email fails to send for any reason, the order
+  // has still genuinely gone through (stock is already decremented), so
+  // we don't fail the whole checkout over an email hiccup. It's just
+  // logged for you to notice in Vercel's function logs.
+  sendOrderConfirmationEmail({
+    to: email,
+    customerName: customer_name,
+    orderId: result.order_id,
+    items: orderRow?.items ?? [],
+    total: result.order_total
+  }).catch((err) => console.error("Order confirmation email failed:", err));
+
   return NextResponse.json({
     order_id: result.order_id,
     total: result.order_total
