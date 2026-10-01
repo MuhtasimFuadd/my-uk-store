@@ -1,4 +1,4 @@
-# Threshold — a perfume shop
+# MMboutique — a perfume shop
 
 A dark, mystical little perfumery site: a video hero, a product grid of
 scents, a working shopping basket, and a password-protected admin panel to
@@ -190,7 +190,7 @@ redirects will try to send people back to `localhost`.
    verify your own domain in Resend (**Domains** → **Add Domain**, then
    a few DNS records at your registrar), update the `FROM_ADDRESS`
    constant in `lib/email.ts` to something like
-   `"Threshold <orders@yourdomain.com>"`.
+   `"MMboutique <orders@yourdomain.com>"`.
 
 **How this connects to orders:** if someone is signed in with Google when
 they check out, their order is automatically linked to their account (via

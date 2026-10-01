@@ -12,8 +12,8 @@ type OrderConfirmationInput = {
 // with no setup, but looks less professional and Resend may rate-limit it
 // more strictly. Once you verify your own domain in Resend's dashboard
 // (Domains -> Add Domain, then a few DNS records), change this to
-// something like "Threshold <orders@yourdomain.com>".
-const FROM_ADDRESS = "Threshold <onboarding@resend.dev>";
+// something like "MMboutique <orders@yourdomain.com>".
+const FROM_ADDRESS = "MMboutique <onboarding@resend.dev>";
 
 export async function sendOrderConfirmationEmail(input: OrderConfirmationInput) {
   const apiKey = process.env.RESEND_API_KEY;

@@ -2,7 +2,7 @@
 // and Node route handlers) rather than Node's "crypto" module, which
 // doesn't work inside Next.js middleware.
 
-export const ADMIN_COOKIE_NAME = "threshold_admin";
+export const ADMIN_COOKIE_NAME = "MMboutique_admin";
 
 function getPassword(): string {
   const password = process.env.ADMIN_PASSWORD;
@@ -40,7 +40,7 @@ function constantTimeEqual(a: string, b: string): boolean {
 // it, so the password isn't sitting in the browser's cookie jar.
 export async function createAdminSessionToken(): Promise<string> {
   const password = getPassword();
-  return hmacSha256Hex(password, "threshold-admin-session");
+  return hmacSha256Hex(password, "MMboutique-admin-session");
 }
 
 export function isCorrectPassword(candidate: string): boolean {
