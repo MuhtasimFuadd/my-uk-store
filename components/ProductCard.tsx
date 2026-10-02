@@ -45,12 +45,6 @@ export default function ProductCard({ product }: { product: Product }) {
           ) : (
             <BottlePlaceholder color={product.accent} />
           )}
-
-          {!product.in_stock && (
-            <span className="absolute left-2 top-2 bg-ink/80 px-2 py-1 text-[10px] uppercase tracking-wide text-paper/70">
-              Out of stock
-            </span>
-          )}
         </div>
 
         <div className="mt-4 flex items-start justify-between gap-3">

@@ -17,7 +17,7 @@ const body = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MMBoutique — Scents from other worlds",
+  title: "MMBoutique",
   description: "A small perfumery. Each bottle is a door; step through."
 };
 
