@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import { getSupabaseServerClient } from "@/lib/supabase-server";
 import { sendOrderConfirmationEmail } from "@/lib/email";
 
 type CheckoutItem = { id: string; quantity: number };
@@ -33,15 +32,6 @@ export async function POST(request: Request) {
     );
   }
 
-  // If they're signed in with Google, this links the order to their
-  // account so it shows up on /account/orders. Guest checkout (not
-  // signed in) still works fine — this is just null in that case, and
-  // place_order() defaults it to null too.
-  const supabaseSession = getSupabaseServerClient();
-  const {
-    data: { user }
-  } = await supabaseSession.auth.getUser();
-
   const supabase = getSupabaseAdmin();
 
   // This single database call does everything atomically — see
@@ -55,8 +45,7 @@ export async function POST(request: Request) {
     p_address_line1: address_line1,
     p_address_line2: address_line2,
     p_city: city,
-    p_postcode: postcode,
-    p_user_id: user?.id ?? null
+    p_postcode: postcode
   });
 
   if (error) {

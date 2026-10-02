@@ -87,7 +87,6 @@ create policy "Public read access to product photos"
 
 create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id), -- who placed it, if they were signed in; null for guest checkout
   customer_name text not null,
   email text not null,
   phone text not null default '',
@@ -101,25 +100,20 @@ create table if not exists orders (
   created_at timestamptz not null default now()
 );
 
--- If you ran an earlier version of this file before Google sign-in existed:
-alter table orders add column if not exists user_id uuid references auth.users(id);
+-- Cleanup for anyone who ran the earlier version of this file that added
+-- Google sign-in / order history — that feature was removed, so this
+-- undoes it. Harmless no-ops if you never had it.
+drop policy if exists "Users can view their own orders" on orders;
+revoke select on orders from authenticated;
+alter table orders drop column if exists user_id;
+drop function if exists place_order(jsonb, text, text, text, text, text, text, text, uuid);
 
 -- Orders contain personal info (name, address, phone), so unlike
--- products, there is no blanket public read policy. Two things can read
--- orders:
---   1. The admin panel's service-role key — bypasses RLS entirely.
---   2. A signed-in customer, but ONLY their own orders (where user_id
---      matches their own account) — never anyone else's, and a guest
---      (not signed in, or a guest-checkout order with no account
---      attached) can't read any orders at all.
+-- products, there is no public read policy at all. Only the admin
+-- panel's service-role key can read orders (it bypasses RLS entirely) —
+-- there's no concept of a customer account or "my orders" page.
 alter table orders enable row level security;
 grant select, insert on orders to service_role;
-grant select on orders to authenticated;
-
-drop policy if exists "Users can view their own orders" on orders;
-create policy "Users can view their own orders"
-  on orders for select
-  using (auth.uid() = user_id);
 
 -- place_order() is what actually takes payment (a fake, instant "payment"
 -- for now) and creates the order. Doing this as one Postgres function,
@@ -136,13 +130,6 @@ create policy "Users can view their own orders"
 --   - Prices come from the products table here, not from whatever the
 --     browser sends, so a tampered client-side cart can't check out for
 --     less than the real price.
---
--- Dropped and recreated (rather than just "create or replace") because
--- we're adding a new parameter (p_user_id) — Postgres treats a different
--- parameter list as a different function, so the old 8-argument version
--- needs removing explicitly or it'd be left behind as dead, unused code.
-drop function if exists place_order(jsonb, text, text, text, text, text, text, text);
-
 create or replace function place_order(
   p_items jsonb,               -- [{"id": "uuid-...", "quantity": 2}, ...]
   p_customer_name text,
@@ -151,8 +138,7 @@ create or replace function place_order(
   p_address_line1 text,
   p_address_line2 text,
   p_city text,
-  p_postcode text,
-  p_user_id uuid default null  -- the signed-in customer's id, if any; null for guest checkout
+  p_postcode text
 ) returns table (order_id uuid, order_total numeric) as $$
 declare
   v_item jsonb;
@@ -209,9 +195,9 @@ begin
   end loop;
 
   insert into orders (
-    user_id, customer_name, email, phone, address_line1, address_line2, city, postcode, items, total, status
+    customer_name, email, phone, address_line1, address_line2, city, postcode, items, total, status
   ) values (
-    p_user_id, p_customer_name, p_email, p_phone, p_address_line1, p_address_line2, p_city, p_postcode, v_order_items, v_total, 'paid'
+    p_customer_name, p_email, p_phone, p_address_line1, p_address_line2, p_city, p_postcode, v_order_items, v_total, 'paid'
   )
   returning id into v_order_id;
 
@@ -221,5 +207,5 @@ $$ language plpgsql;
 
 -- Only our own server-side code (using the service-role key) is allowed
 -- to call this — never the public anon key directly.
-revoke all on function place_order(jsonb, text, text, text, text, text, text, text, uuid) from public;
-grant execute on function place_order(jsonb, text, text, text, text, text, text, text, uuid) to service_role;
+revoke all on function place_order(jsonb, text, text, text, text, text, text, text) from public;
+grant execute on function place_order(jsonb, text, text, text, text, text, text, text) to service_role;

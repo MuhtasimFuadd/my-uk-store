@@ -3,10 +3,7 @@ import ProductGrid from "@/components/ProductGrid";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 
-// See the comment in app/page.tsx — same @supabase/ssr + static
-// prerendering workaround, needed here for the same reason (this page
-// also renders SiteHeader, which renders AccountMenu).
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function ProductsPage() {
   const products = await getProducts();

@@ -1,4 +1,4 @@
-# MMboutique — a perfume shop
+# MMBoutique — a perfume shop
 
 A dark, mystical little perfumery site: a video hero, a product grid of
 scents, a working shopping basket, and a password-protected admin panel to
@@ -151,32 +151,12 @@ If you already had products in Supabase before this update, re-run
 (`vial_design_url`, `gender`, `vial_size`, `in_stock`, `stock_count`) with
 safe defaults, it won't touch your existing rows' data.
 
-## Customer accounts (Google sign-in) and order emails
+## Order confirmation emails
 
-Two separate things to set up here — neither needs new code from you, just
-clicking through two dashboards.
-
-**1. Google sign-in, via Supabase Auth:**
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/) →
-   create a project (or use an existing one) → **APIs & Services** →
-   **Credentials** → **Create Credentials** → **OAuth client ID**.
-2. Application type: **Web application**.
-3. Under **Authorized redirect URIs**, add:
-   `https://<your-project-ref>.supabase.co/auth/v1/callback`
-   (find `<your-project-ref>` in your Supabase Project URL).
-4. Click Create. Copy the **Client ID** and **Client Secret** it gives you.
-5. In Supabase: **Authentication** → **Providers** → **Google** → paste
-   in the Client ID and Client Secret → enable it → Save.
-6. That's it — no new environment variables needed for this part, since
-   it's configured entirely in Supabase's dashboard, not in your code.
-
-You'll also want to set your **Site URL** and **Redirect URLs** under
-**Authentication → URL Configuration** in Supabase to your real domain
-once you have one (e.g. `https://yoursite.vercel.app`), or sign-in
-redirects will try to send people back to `localhost`.
-
-**2. Order confirmation emails, via Resend:**
+There's no customer account system (Google sign-in was considered and
+deliberately left out) — checkout is guest-only, every time. Everyone who
+orders still gets a confirmation email, since that only needs the email
+address typed into the checkout form, via Resend:
 
 1. Sign up free at [resend.com](https://resend.com).
 2. **API Keys** → **Create API Key** → copy it.
@@ -190,15 +170,7 @@ redirects will try to send people back to `localhost`.
    verify your own domain in Resend (**Domains** → **Add Domain**, then
    a few DNS records at your registrar), update the `FROM_ADDRESS`
    constant in `lib/email.ts` to something like
-   `"MMboutique <orders@yourdomain.com>"`.
-
-**How this connects to orders:** if someone is signed in with Google when
-they check out, their order is automatically linked to their account (via
-a `user_id` column) and shows up at `/account/orders`. If they check out
-as a guest (not signed in), the order still goes through exactly the
-same way — it just won't appear in anyone's order history, since there's
-no account to attach it to. Both cases always get the confirmation email,
-since that only needs the email address typed into the checkout form.
+   `"MMBoutique <orders@yourdomain.com>"`.
 
 ## Checkout and orders
 

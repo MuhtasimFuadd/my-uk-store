@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
-import AccountMenu from "./AccountMenu";
 
 export default function SiteHeader() {
   const { count } = useCart();
@@ -20,7 +19,6 @@ export default function SiteHeader() {
           <Link href="/cart" className="hover:text-paper">
             Basket ({count})
           </Link>
-          <AccountMenu />
         </nav>
       </div>
     </header>
