@@ -20,7 +20,6 @@ export default async function ProductsPage() {
           <h2 className="mt-3 font-display text-3xl text-paper">
             A variety of scents, each a door to another world.
           </h2>
-          <p className="mt-3 text-paper/60">Browse below</p>
         </div>
         <ProductGrid products={products} />
       </section>
