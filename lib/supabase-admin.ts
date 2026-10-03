@@ -14,6 +14,11 @@ export function getSupabaseAdmin() {
   }
 
   return createClient(url, serviceKey, {
-    auth: { persistSession: false }
+    auth: { persistSession: false },
+    // Same reasoning as lib/products.ts — never let Next.js's automatic
+    // fetch caching serve a stale read through this client either.
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" })
+    }
   });
 }

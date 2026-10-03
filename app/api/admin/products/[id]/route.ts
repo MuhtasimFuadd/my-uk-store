@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/require-admin";
 
@@ -54,6 +55,14 @@ export async function PUT(
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // This is the actual fix for "I swapped a photo and the site still
+  // shows the old one" — without this, both the shop grid and this
+  // product's own page could keep serving their previously-cached HTML
+  // for up to a minute (or longer, for the detail page) after a save.
+  revalidatePath("/products");
+  revalidatePath(`/products/${params.id}`);
+
   return NextResponse.json({ product: data });
 }
 
@@ -68,5 +77,9 @@ export async function DELETE(
   const { error } = await supabase.from("products").delete().eq("id", params.id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  revalidatePath("/products");
+  revalidatePath(`/products/${params.id}`);
+
   return NextResponse.json({ ok: true });
 }

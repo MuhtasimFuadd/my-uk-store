@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdmin } from "@/lib/require-admin";
 
@@ -64,5 +65,11 @@ export async function POST(request: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Without this, the cached /products page could keep showing the old
+  // list for up to 60 seconds (its revalidate window) before picking up
+  // a brand new product.
+  revalidatePath("/products");
+
   return NextResponse.json({ product: data }, { status: 201 });
 }

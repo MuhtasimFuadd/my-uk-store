@@ -103,7 +103,20 @@ function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
-  return createClient(url, key);
+
+  // supabase-js makes its requests using the global fetch() function —
+  // and inside a Next.js Server Component, Next.js silently intercepts
+  // and caches EVERY fetch() call by default, including ones made deep
+  // inside a third-party library like this. Without this override, a
+  // product's data can get cached by Next the first time it's read and
+  // then keep serving that same stale snapshot — old photos, old prices —
+  // even after you save changes in the admin panel. Forcing
+  // cache: "no-store" here makes every read always hit Supabase fresh.
+  return createClient(url, key, {
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" })
+    }
+  });
 }
 
 export async function getProducts(): Promise<Product[]> {
