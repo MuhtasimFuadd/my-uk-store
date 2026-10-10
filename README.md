@@ -165,12 +165,18 @@ address typed into the checkout form, via Resend:
 4. Without this set, checkout still works fine; the email is just
    skipped (and logged as a warning), so this isn't required to test
    everything else.
-5. Emails send from `onboarding@resend.dev` by default, which works
-   immediately with no setup but looks less professional. Once you
-   verify your own domain in Resend (**Domains** → **Add Domain**, then
-   a few DNS records at your registrar), update the `FROM_ADDRESS`
-   constant in `lib/email.ts` to something like
+5. **Important:** emails send from `onboarding@resend.dev` by default,
+   and Resend only lets that test sender deliver to **the email address
+   you signed up to Resend with** — nobody else. A real customer's
+   address will be rejected. To email real customers you need to verify
+   a domain you own in Resend (**Domains** → **Add Domain**, then add the
+   DNS records it gives you at your registrar), and update the
+   `FROM_ADDRESS` constant in `lib/email.ts` to something like
    `"MMBoutique <orders@yourdomain.com>"`.
+6. If emails aren't arriving, check Vercel → your project → **Logs**
+   right after placing a test order. A successful send logs
+   `Order #N confirmation sent to ...`; a failure logs Resend's actual
+   reason (e.g. the recipient restriction above, or a bad API key).
 
 ## Checkout and orders
 

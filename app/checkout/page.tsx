@@ -20,7 +20,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [confirmation, setConfirmation] = useState<{
-    orderId: string;
+    orderNumber: number;
     total: number;
   } | null>(null);
 
@@ -49,7 +49,7 @@ export default function CheckoutPage() {
       // always-succeeds "payment" once stock is confirmed available.
       // Swap this fetch for a real charge (e.g. Stripe) later; everything
       // else (the order record, stock decrement) stays the same.
-      setConfirmation({ orderId: data.order_id, total: data.total });
+      setConfirmation({ orderNumber: data.order_number, total: data.total });
       clear();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -67,9 +67,14 @@ export default function CheckoutPage() {
           <p className="mt-3 text-paper/60">
             Thank you, {form.name || "friend"} — your order is confirmed.
           </p>
-          <p className="mt-6 text-sm text-paper/50">
-            Order reference:{" "}
-            <span className="font-mono text-paper/80">{confirmation.orderId}</span>
+          <p className="mt-6 text-lg text-paper">
+            Order number:{" "}
+            <span className="font-display text-brass-light">
+              #{confirmation.orderNumber}
+            </span>
+          </p>
+          <p className="mt-1 text-xs text-paper/40">
+            Quote this number if you get in touch about your order.
           </p>
           <p className="mt-1 text-sm text-paper/50">
             Total paid: <span className="text-brass-light">£{confirmation.total.toFixed(2)}</span>

@@ -86,7 +86,8 @@ create policy "Public read access to product photos"
 -- ============================================================
 
 create table if not exists orders (
-  id uuid primary key default gen_random_uuid(),
+  id uuid primary key default gen_random_uuid(), -- internal id, never shown to customers
+  order_number bigserial unique,                 -- the short number customers actually see/quote, e.g. #1, #2, #3...
   customer_name text not null,
   email text not null,
   phone text not null default '',
@@ -96,9 +97,12 @@ create table if not exists orders (
   postcode text not null,
   items jsonb not null,        -- snapshot of what was bought: [{product_id, title, price, quantity}, ...]
   total numeric(10, 2) not null,
-  status text not null default 'paid', -- always 'paid' for now — there's no real payment processor yet
+  status text not null default 'paid', -- 'paid' (current/not yet delivered) or 'delivered'
   created_at timestamptz not null default now()
 );
+
+-- If you ran an earlier version of this file before order_number existed:
+alter table orders add column if not exists order_number bigserial unique;
 
 -- Cleanup for anyone who ran the earlier version of this file that added
 -- Google sign-in / order history — that feature was removed, so this
@@ -130,6 +134,11 @@ grant select, insert on orders to service_role;
 --   - Prices come from the products table here, not from whatever the
 --     browser sends, so a tampered client-side cart can't check out for
 --     less than the real price.
+-- Postgres won't let "create or replace" change a function's return
+-- type, even with identical parameters — this drop is specifically for
+-- that (order_number is a new column in the return table below).
+drop function if exists place_order(jsonb, text, text, text, text, text, text, text);
+
 create or replace function place_order(
   p_items jsonb,               -- [{"id": "uuid-...", "quantity": 2}, ...]
   p_customer_name text,
@@ -139,7 +148,7 @@ create or replace function place_order(
   p_address_line2 text,
   p_city text,
   p_postcode text
-) returns table (order_id uuid, order_total numeric) as $$
+) returns table (order_id uuid, order_number bigint, order_total numeric) as $$
 declare
   v_item jsonb;
   v_product_id uuid;
@@ -150,6 +159,7 @@ declare
   v_total numeric := 0;
   v_order_items jsonb := '[]'::jsonb;
   v_order_id uuid;
+  v_order_number bigint;
 begin
   if jsonb_array_length(p_items) = 0 then
     raise exception 'No items in order';
@@ -199,9 +209,9 @@ begin
   ) values (
     p_customer_name, p_email, p_phone, p_address_line1, p_address_line2, p_city, p_postcode, v_order_items, v_total, 'paid'
   )
-  returning id into v_order_id;
+  returning id, order_number into v_order_id, v_order_number;
 
-  return query select v_order_id, v_total;
+  return query select v_order_id, v_order_number, v_total;
 end;
 $$ language plpgsql;
 

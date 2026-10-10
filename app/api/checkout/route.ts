@@ -66,20 +66,35 @@ export async function POST(request: Request) {
     .eq("id", result.order_id)
     .single();
 
-  // Best-effort — if the email fails to send for any reason, the order
-  // has still genuinely gone through (stock is already decremented), so
-  // we don't fail the whole checkout over an email hiccup. It's just
-  // logged for you to notice in Vercel's function logs.
-  sendOrderConfirmationEmail({
-    to: email,
-    customerName: customer_name,
-    orderId: result.order_id,
-    items: orderRow?.items ?? [],
-    total: result.order_total
-  }).catch((err) => console.error("Order confirmation email failed:", err));
+  // If the email fails for any reason, the order has still genuinely gone
+  // through (stock is already decremented), so we never fail the whole
+  // checkout over it — the failure is just logged in Vercel's function
+  // logs.
+  //
+  // IMPORTANT: this is awaited on purpose. Previously it was fired off
+  // without waiting, but on Vercel a serverless function can be frozen
+  // the moment it sends its response — which could cut the email request
+  // off before it finished, unpredictably. Waiting costs a fraction of a
+  // second and guarantees the send actually completes (or fails loudly).
+  try {
+    await sendOrderConfirmationEmail({
+      to: email,
+      customerName: customer_name,
+      orderNumber: result.order_number,
+      items: orderRow?.items ?? [],
+      total: result.order_total
+    });
+  } catch (err) {
+    console.error("Order confirmation email failed:", err);
+  }
 
   return NextResponse.json({
+    // order_number is the short, sequential reference (#1, #2, ...) a
+    // customer can actually read out over the phone — order_id is the
+    // long internal uuid, kept here only in case it's ever useful for
+    // debugging, never shown to the customer.
     order_id: result.order_id,
+    order_number: result.order_number,
     total: result.order_total
   });
 }

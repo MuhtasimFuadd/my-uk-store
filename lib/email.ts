@@ -3,15 +3,18 @@ import { Resend } from "resend";
 type OrderConfirmationInput = {
   to: string;
   customerName: string;
-  orderId: string;
+  orderNumber: number;
   items: { title: string; price: number; quantity: number }[];
   total: number;
 };
 
-// Using Resend's shared "onboarding@resend.dev" sender works immediately
-// with no setup, but looks less professional and Resend may rate-limit it
-// more strictly. Once you verify your own domain in Resend's dashboard
-// (Domains -> Add Domain, then a few DNS records), change this to
+// IMPORTANT LIMITATION: Resend's shared "onboarding@resend.dev" test
+// sender can ONLY deliver to the email address you signed up to Resend
+// with. Sending to anyone else (i.e. a real customer) is rejected by
+// Resend, which is why checkout emails stop arriving as soon as you test
+// with a different address. To email real customers you must verify a
+// domain you own in Resend (Domains -> Add Domain, then add the DNS
+// records it gives you at your domain registrar), then change this to
 // something like "MMBoutique <orders@yourdomain.com>".
 const FROM_ADDRESS = "MMBoutique <onboarding@resend.dev>";
 
@@ -31,17 +34,27 @@ export async function sendOrderConfirmationEmail(input: OrderConfirmationInput) 
     )
     .join("\n");
 
-  await resend.emails.send({
+  // Resend does NOT throw when it rejects a send (bad key, unverified
+  // recipient, rate limit...). It returns { data, error } instead — so
+  // the result has to be checked explicitly, or failures vanish without
+  // a trace. Throwing here lets the caller log the real reason.
+  const { data, error } = await resend.emails.send({
     from: FROM_ADDRESS,
     to: input.to,
-    subject: `Your order is confirmed — #${input.orderId.slice(0, 8)}`,
+    subject: `Your order is confirmed — #${input.orderNumber}`,
     text: `Thanks for your order, ${input.customerName}!
 
-Order reference: ${input.orderId}
+Order number: #${input.orderNumber}
 Total: £${input.total.toFixed(2)}
 
 ${itemLines}
 
 We'll be in touch about delivery. If anything looks wrong, just reply to this email.`
   });
+
+  if (error) {
+    throw new Error(`Resend rejected the email (${error.name}): ${error.message}`);
+  }
+
+  console.log(`Order #${input.orderNumber} confirmation sent to ${input.to} (Resend id: ${data?.id})`);
 }
